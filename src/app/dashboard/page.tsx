@@ -18,7 +18,7 @@ export default function DashboardPage() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                🐱 貓咪清單
+                🐱 貓咪清 單
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -27,8 +27,7 @@ export default function DashboardPage() {
               </p>
               <Link href="/cats">
                 <Button className="w-full">
-                  查看貓咪清單
-                </Button>
+                  查看                </Button>
               </Link>
             </CardContent>
           </Card>

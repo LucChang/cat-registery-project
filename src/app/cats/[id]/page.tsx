@@ -7,8 +7,10 @@ import Link from 'next/link'
 import { useParams } from 'next/navigation'
 
 interface Cat {
+  
   id: string
   name: string
+  picture?: string
   breed?: string
   color?: string
   gender?: string
@@ -23,7 +25,7 @@ export default function CatDetailPage() {
   const catId = params.id as string
   const [cat, setCat] = useState<Cat | null>(null)
   const [loading, setLoading] = useState(true)
-
+  // const 
   useEffect(() => {
     // TODO: 從 API 獲取貓咪詳細資料
     // 現在使用模擬資料
@@ -138,7 +140,11 @@ export default function CatDetailPage() {
                     <h3 className="font-medium text-gray-900">名字</h3>
                     <p className="text-gray-600">{cat.name}</p>
                   </div>
-                  
+                  {cat.picture && (
+                    <div>
+                      <p className="text-gray-600">{cat.picture}</p> // 修改
+                    </div>
+                  )}
                   {cat.breed && (
                     <div>
                       <h3 className="font-medium text-gray-900">品種</h3>
