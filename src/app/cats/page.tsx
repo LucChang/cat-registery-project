@@ -14,6 +14,7 @@ interface Cat {
   birthDate?: string
   imageUrl?: string
   description?: string
+  isCaged: boolean
   createdAt: string
   updatedAt: string
   owner?: {
@@ -89,7 +90,7 @@ export default function CatsPage() {
                     <img 
                       src={cat.imageUrl.startsWith('http') ? cat.imageUrl : cat.imageUrl} 
                       alt={cat.name}
-                      className="w-full h-48 object-cover rounded-md"
+                      className="w-full h-48 object-cover rounded-md shadow-2xl"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder-cat.jpg'
                       }}
@@ -114,9 +115,17 @@ export default function CatsPage() {
                   )}
                   {cat.birthDate && (
                     <p className="text-sm">
-                      <span className="font-medium">出生日期：</span>{new Date(cat.birthDate).toLocaleDateString('zh-TW')}
+                      <span className="font-medium">進入日期：</span>{new Date(cat.birthDate).toLocaleDateString('zh-TW')}
                     </p>
                   )}
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">關龍狀態：</span>
+                    <span className={`font-medium text-sm ${
+                      cat.isCaged ? 'text-red-600' : 'text-green-600'
+                    }`}>
+                      {cat.isCaged ? "關籠" : "不關籠"}
+                    </span>
+                  </div>
                   {cat.owner && (
                     <p className="text-sm text-gray-600">
                       <span className="font-medium">飼主：</span>{cat.owner.name}
@@ -130,6 +139,11 @@ export default function CatsPage() {
                     </Button>
                   </Link>
                   <div className="flex gap-2">
+                    <Link href={`/cats/${cat.id}/edit`} className="flex-1">
+                      <Button variant="outline" size="sm" className="w-full">
+                        編輯資料
+                      </Button>
+                    </Link>
                     <Link href={`/cats/${cat.id}/health`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">
                         健康記錄

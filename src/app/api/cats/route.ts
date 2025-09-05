@@ -73,6 +73,7 @@ export async function POST(request: Request) {
         description,
         imageUrl: pictureUrl,
         ownerId, // 添加 ownerId 欄位
+        // Remove isCaged field as it's not defined in the Prisma schema
       },
     })
 

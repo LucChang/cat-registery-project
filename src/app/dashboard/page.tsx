@@ -18,7 +18,7 @@ export default function DashboardPage() {
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                🐱 貓咪清 單
+                🐱 貓咪清單
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -51,11 +51,30 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* 關龍管理卡片 */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                🏠 關龍管理
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">
+                管理貓咪的關龍狀態
+              </p>
+              <Link href="/dashboard/cage-management">
+                <Button className="w-full">
+                  管理關龍
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           {/* 註冊新貓咪卡片 */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                🏠 註冊新貓咪
+                ➕ 註冊新貓咪
               </CardTitle>
             </CardHeader>
             <CardContent>

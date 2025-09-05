@@ -142,7 +142,7 @@ export default function CatDetailPage() {
                   </div>
                   {cat.picture && (
                     <div>
-                      <p className="text-gray-600">{cat.picture}</p> // 修改
+                      <img className="rounded-lg">{cat.picture}</img> // 修改
                     </div>
                   )}
                   {cat.breed && (
