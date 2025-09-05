@@ -13,6 +13,13 @@ interface Cat {
   gender?: string
   birthDate?: string
   imageUrl?: string
+  description?: string
+  createdAt: string
+  updatedAt: string
+  owner?: {
+    name: string
+    email: string
+  }
 }
 
 export default function CatsPage() {
@@ -20,38 +27,25 @@ export default function CatsPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // TODO: 從 API 獲取貓咪資料
-    // 現在使用模擬資料
-    setTimeout(() => {
-      setCats([
-        {
-          id: '1',
-          name: '小橘',
-          breed: '橘貓',
-          color: '橘色',
-          gender: '公',
-          birthDate: '2022-05-15'
-        },
-        {
-          id: '2',
-          name: '咪咪',
-          breed: '英國短毛貓',
-          color: '灰色',
-          gender: '母',
-          birthDate: '2021-08-22'
-        },
-        {
-          id: '3',
-          name: '雪球',
-          breed: '波斯貓',
-          color: '白色',
-          gender: '母',
-          birthDate: '2023-01-10'
-        }
-      ])
-      setLoading(false)
-    }, 1000)
+    fetchCats()
   }, [])
+
+  const fetchCats = async () => {
+    try {
+      const response = await fetch('/api/cats')
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || '無法獲取貓咪資料')
+      }
+      
+      setCats(data.cats || [])
+      setLoading(false)
+    } catch (error) {
+      console.error('獲取貓咪資料失敗:', error)
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -90,6 +84,18 @@ export default function CatsPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
+                {cat.imageUrl && (
+                  <div className="mb-4">
+                    <img 
+                      src={cat.imageUrl.startsWith('http') ? cat.imageUrl : cat.imageUrl} 
+                      alt={cat.name}
+                      className="w-full h-48 object-cover rounded-md"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/placeholder-cat.jpg'
+                      }}
+                    />
+                  </div>
+                )}
                 <div className="space-y-2">
                   {cat.breed && (
                     <p className="text-sm">
@@ -108,7 +114,12 @@ export default function CatsPage() {
                   )}
                   {cat.birthDate && (
                     <p className="text-sm">
-                      <span className="font-medium">出生日期：</span>{cat.birthDate}
+                      <span className="font-medium">出生日期：</span>{new Date(cat.birthDate).toLocaleDateString('zh-TW')}
+                    </p>
+                  )}
+                  {cat.owner && (
+                    <p className="text-sm text-gray-600">
+                      <span className="font-medium">飼主：</span>{cat.owner.name}
                     </p>
                   )}
                 </div>

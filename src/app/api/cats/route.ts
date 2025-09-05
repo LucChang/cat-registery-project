@@ -3,6 +3,29 @@ import { writeFile } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
 
+export async function GET() {
+  try {
+    const cats = await prisma.cat.findMany({
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    return NextResponse.json({ cats }, { status: 200 })
+  } catch (error) {
+    console.error('Error fetching cats:', error)
+    return NextResponse.json({ message: 'Error fetching cats', error: (error as Error).message }, { status: 500 })
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
