@@ -3,15 +3,16 @@ import { prisma } from '@/lib/prisma'
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
     const { isCaged } = body
+    const { id } = await params
 
     // 確保貓咪存在
     const existingCat = await prisma.cat.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingCat) {
@@ -20,9 +21,9 @@ export async function PUT(
 
     // 更新關龍狀態
     const updatedCat = await prisma.cat.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
-        cageStatus: isCaged,
+        isCaged: isCaged,
         updatedAt: new Date()
       }
     })

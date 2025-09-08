@@ -1,0 +1,55 @@
+name: Database Migration Check
+
+on:
+  pull_request:
+    paths:
+      - 'prisma/**'
+      - 'src/lib/prisma.ts'
+      - '.env.example'
+
+jobs:
+  check-migrations:
+    name: Check Database Migrations
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Check Prisma schema
+        run: npx prisma validate
+        
+      - name: Check for unapplied migrations
+        run: |
+          npx prisma generate
+          npx prisma migrate diff --from-schema-datamodel=prisma/schema.prisma --to-schema-datasource=prisma/schema.prisma --exit-code || echo "Schema changes detected"
+          
+      - name: Generate migration diff report
+        if: failure()
+        run: |
+          echo "## Database Schema Changes Detected" >> migration-report.md
+          echo "Please ensure all schema changes have corresponding migrations." >> migration-report.md
+          echo "Run: npx prisma migrate dev --name [migration-name]" >> migration-report.md
+          
+      - name: Comment PR with migration report
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('migration-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

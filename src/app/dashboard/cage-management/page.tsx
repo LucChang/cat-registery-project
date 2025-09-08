@@ -1,10 +1,9 @@
-'use client'
-
-import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Image from 'next/image'
 import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 interface Cat {
   id: string
@@ -18,82 +17,42 @@ interface Cat {
   }
 }
 
-export default function CageManagementPage() {
-  const [cats, setCats] = useState<Cat[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchCats()
-  }, [])
-
-  const fetchCats = async () => {
-    try {
-      const response = await fetch('/api/cats')
-      const data = await response.json()
-      if (response.ok) {
-        setCats(data.cats)
-      } else {
-        setError(data.message || '獲取貓咪資料失敗')
+async function getCats() {
+  try {
+    const cats = await prisma.cat.findMany({
+      include: {
+        owner: {
+          select: {
+            name: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
-    } catch (error) {
-      setError('網路錯誤')
-    } finally {
-      setLoading(false)
-    }
+    })
+    return cats
+  } catch (error) {
+    console.error('獲取貓咪資料失敗:', error)
+    return []
   }
+}
 
-  const toggleCageStatus = async (catId: string, currentStatus: boolean) => {
+export default async function CageManagementPage() {
+  const cats = await getCats()
+
+  async function toggleCageStatus(catId: string, currentStatus: boolean) {
+    'use server'
+    
     try {
-      const response = await fetch(`/api/cats/${catId}/cage`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ isCaged: !currentStatus }),
+      await prisma.cat.update({
+        where: { id: catId },
+        data: { isCaged: !currentStatus }
       })
-
-      if (response.ok) {
-        const updatedCat = await response.json()
-        setCats(cats.map(cat => 
-          cat.id === catId 
-            ? { ...cat, isCaged: updatedCat.cat.isCaged }
-            : cat
-        ))
-      } else {
-        alert('更新失敗')
-      }
+      revalidatePath('/dashboard/cage-management')
     } catch (error) {
-      alert('網路錯誤')
+      console.error('更新關龍狀態失敗:', error)
     }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">載入中...</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center">
-            <p className="text-red-600">{error}</p>
-            <Button onClick={fetchCats} className="mt-4">
-              重新載入
-            </Button>
-          </div>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -154,21 +113,21 @@ export default function CageManagementPage() {
                     </div>
                   </div>
                   
-                  <div className="flex items-center justify-between pt-4 border-t">
+                  <form action={toggleCageStatus.bind(null, cat.id, cat.isCaged)} className="flex items-center justify-between pt-4 border-t">
                     <span className="text-sm font-medium">關龍狀態</span>
                     <button
-                    onClick={() => toggleCageStatus(cat.id, cat.isCaged)}
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                      cat.isCaged ? 'bg-red-600' : 'bg-green-600'
-                    }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                        cat.isCaged ? 'translate-x-6' : 'translate-x-1'
+                      type="submit"
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                        cat.isCaged ? 'bg-red-600' : 'bg-green-600'
                       }`}
-                    />
-                  </button>
-                  </div>
+                    >
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          cat.isCaged ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                  </form>
                 </div>
               </CardContent>
             </Card>

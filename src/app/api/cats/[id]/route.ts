@@ -3,11 +3,12 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const cat = await prisma.cat.findUnique({
-      where: { id: params.id },
+      where: { id: id },
       include: {
         owner: {
           select: {
@@ -31,15 +32,16 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const body = await request.json()
     const { name, breed, color, gender, birthDate, description, imageUrl } = body
+    const { id } = await params
 
     // 確保貓咪存在
     const existingCat = await prisma.cat.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingCat) {
@@ -48,7 +50,7 @@ export async function PUT(
 
     // 更新貓咪資料
     const updatedCat = await prisma.cat.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name,
         breed,
@@ -76,12 +78,13 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     // 確保貓咪存在
     const existingCat = await prisma.cat.findUnique({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     if (!existingCat) {
@@ -90,7 +93,7 @@ export async function DELETE(
 
     // 刪除貓咪
     await prisma.cat.delete({
-      where: { id: params.id }
+      where: { id: id }
     })
 
     return NextResponse.json({ 
