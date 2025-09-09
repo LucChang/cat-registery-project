@@ -5,18 +5,6 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
-interface Cat {
-  id: string
-  name: string
-  breed: string
-  color: string
-  imageUrl: string | null
-  isCaged: boolean
-  owner: {
-    name: string
-  }
-}
-
 async function getCats() {
   try {
     const cats = await prisma.cat.findMany({

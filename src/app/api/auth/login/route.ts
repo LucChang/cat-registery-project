@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 登入成功
-    const { password: _, ...userWithoutPassword } = user
+    const { password: _password, ...userWithoutPassword } = user
     
     return NextResponse.json(
       { message: '登入成功', user: userWithoutPassword },

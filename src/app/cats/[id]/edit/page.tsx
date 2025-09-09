@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -40,7 +40,7 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
     fetchCatData()
   }, [params.id])
 
-  const fetchCatData = async () => {
+  const fetchCatData = useCallback(async () => {
     try {
       const response = await fetch(`/api/cats/${params.id}`)
       const data = await response.json()
@@ -55,7 +55,7 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
       console.error('獲取貓咪資料失敗:', error)
       setLoading(false)
     }
-  }
+  }, [params.id])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

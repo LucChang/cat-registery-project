@@ -37,9 +37,6 @@ model Cat {
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
   
-  // 關龍狀態
-  isCaged Boolean @default(false)
-  
   // 健康紀錄
   healthRecords HealthRecord[]
   medicalRecords MedicalRecord[]

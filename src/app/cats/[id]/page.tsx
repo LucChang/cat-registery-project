@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
@@ -142,7 +143,13 @@ export default function CatDetailPage() {
                   </div>
                   {cat.picture && (
                     <div>
-                      <img className="rounded-lg">{cat.picture}</img> // 修改
+                      <Image 
+                        src={cat.picture} 
+                        alt={cat.name}
+                        width={100}
+                        height={100}
+                        className="rounded-lg"
+                      />
                     </div>
                   )}
                   {cat.breed && (
@@ -205,9 +212,11 @@ export default function CatDetailPage() {
               </CardHeader>
               <CardContent>
                 {cat.imageUrl ? (
-                  <img 
+                  <Image 
                     src={cat.imageUrl} 
                     alt={cat.name}
+                    width={400}
+                    height={192}
                     className="w-full h-48 object-cover rounded-lg"
                   />
                 ) : (

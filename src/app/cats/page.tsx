@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
@@ -87,9 +88,11 @@ export default function CatsPage() {
               <CardContent>
                 {cat.imageUrl && (
                   <div className="mb-4">
-                    <img 
+                    <Image 
                       src={cat.imageUrl.startsWith('http') ? cat.imageUrl : cat.imageUrl} 
                       alt={cat.name}
+                      width={400}
+                      height={192}
                       className="w-full h-48 object-cover rounded-md shadow-2xl"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/placeholder-cat.jpg'

@@ -18,10 +18,17 @@ export default function NewRecordPage() {
   const [cats, setCats] = useState<Cat[]>([])
   const [selectedCatId, setSelectedCatId] = useState('')
   const [recordType, setRecordType] = useState('')
+  const [loading, setLoading] = useState(true)
   const [healthData, setHealthData] = useState({
-    weight: '',
-    height: '',
-    temperature: '',
+    date: '',
+    timeSlot: '',
+    dryFood: '',
+    stool: '',
+    urine: '',
+    vomiting: '',
+    cough: '',
+    symptoms: '',
+    behavior: '',
     notes: ''
   })
   const [medicalData, setMedicalData] = useState({
@@ -38,13 +45,23 @@ export default function NewRecordPage() {
   })
 
   useEffect(() => {
-    // TODO: 從 API 獲取貓咪清單
-    // 現在使用模擬資料
-    setCats([
-      { id: '1', name: '小橘' },
-      { id: '2', name: '咪咪' },
-      { id: '3', name: '雪球' }
-    ])
+    const fetchCats = async () => {
+      try {
+        const response = await fetch('/api/cats')
+        if (!response.ok) {
+          throw new Error('獲取貓咪資料失敗')
+        }
+        const data = await response.json()
+        setCats(data.cats || [])
+      } catch (error) {
+        console.error('獲取貓咪資料失敗:', error)
+        alert('無法獲取貓咪資料，請稍後再試')
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchCats()
   }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -98,16 +115,24 @@ export default function NewRecordPage() {
               {/* 選擇貓咪 */}
               <div className="space-y-2">
                 <Label htmlFor="cat">選擇貓咪 *</Label>
-                <Select onValueChange={setSelectedCatId}>
+                <Select onValueChange={setSelectedCatId} disabled={loading}>
                   <SelectTrigger>
-                    <SelectValue placeholder="請選擇要記錄的貓咪" />
+                    <SelectValue 
+                      placeholder={loading ? "載入貓咪資料中..." : "請選擇要記錄的貓咪"} 
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    {cats.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.id}>
-                        {cat.name}
+                    {cats.length === 0 && !loading ? (
+                      <SelectItem value="none" disabled>
+                        尚無貓咪資料
                       </SelectItem>
-                    ))}
+                    ) : (
+                      cats.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name}
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -131,42 +156,141 @@ export default function NewRecordPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">健康記錄</h3>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="weight">體重 (kg)</Label>
-                      <Input
-                        id="weight"
-                        type="number"
-                        step="0.1"
-                        value={healthData.weight}
-                        onChange={(e) => handleHealthDataChange('weight', e.target.value)}
-                        placeholder="例：4.5"
-                      />
-                    </div>
+                  {/* 日期 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="date">日期 *</Label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={healthData.date}
+                      onChange={(e) => handleHealthDataChange('date', e.target.value)}
+                      required
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="height">身長 (cm)</Label>
-                      <Input
-                        id="height"
-                        type="number"
-                        step="0.1"
-                        value={healthData.height}
-                        onChange={(e) => handleHealthDataChange('height', e.target.value)}
-                        placeholder="例：45"
-                      />
-                    </div>
+                  {/* 時段 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="timeSlot">時段 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('timeSlot', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇時段" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="上午">上午</SelectItem>
+                        <SelectItem value="下午">下午</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="temperature">體溫 (°C)</Label>
-                      <Input
-                        id="temperature"
-                        type="number"
-                        step="0.1"
-                        value={healthData.temperature}
-                        onChange={(e) => handleHealthDataChange('temperature', e.target.value)}
-                        placeholder="例：38.5"
-                      />
-                    </div>
+                  {/* 乾食 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="dryFood">乾食 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('dryFood', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇乾食狀況" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="正常">正常</SelectItem>
+                        <SelectItem value="一點">一點</SelectItem>
+                        <SelectItem value="不吃">不吃</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 大便 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="stool">大便 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('stool', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇大便狀況" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="成形">成形</SelectItem>
+                        <SelectItem value="軟便">軟便</SelectItem>
+                        <SelectItem value="拉肚子">拉肚子</SelectItem>
+                        <SelectItem value="血便">血便</SelectItem>
+                        <SelectItem value="無">無</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 尿 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="urine">尿 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('urine', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇尿的狀況" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="正常">正常</SelectItem>
+                        <SelectItem value="過多">過多</SelectItem>
+                        <SelectItem value="血尿">血尿</SelectItem>
+                        <SelectItem value="少量">少量</SelectItem>
+                        <SelectItem value="無">無</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 嘔吐 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="vomiting">嘔吐 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('vomiting', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇嘔吐狀況" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="無">無</SelectItem>
+                        <SelectItem value="食物/毛球">食物/毛球</SelectItem>
+                        <SelectItem value="其他">其他</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 咳嗽 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="cough">咳嗽 *</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('cough', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇咳嗽狀況" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="有">有</SelectItem>
+                        <SelectItem value="無">無</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 症狀 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="symptoms">症狀</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('symptoms', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇症狀（可選）" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="打噴嚏">打噴嚏</SelectItem>
+                        <SelectItem value="鼻塞">鼻塞</SelectItem>
+                        <SelectItem value="流鼻涕">流鼻涕</SelectItem>
+                        <SelectItem value="眼睛紅腫">眼睛紅腫</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* 行為 */}
+                  <div className="space-y-2">
+                    <Label htmlFor="behavior">行為</Label>
+                    <Select onValueChange={(value) => handleHealthDataChange('behavior', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="請選擇行為（可選）" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="親人">親人</SelectItem>
+                        <SelectItem value="害怕">害怕</SelectItem>
+                        <SelectItem value="沮喪">沮喪</SelectItem>
+                        <SelectItem value="無性">無性</SelectItem>
+                        <SelectItem value="在沙盆外">在沙盆外</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   <div className="space-y-2">

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'fs/promises'
 import path from 'path'
 import { prisma } from '@/lib/prisma'
 
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       const filePath = path.join(uploadDir, filename)
 
       // Ensure the upload directory exists
-      await require('fs/promises').mkdir(uploadDir, { recursive: true })
+      await mkdir(uploadDir, { recursive: true })
       await writeFile(filePath, buffer)
       pictureUrl = `/uploads/${filename}`
     }

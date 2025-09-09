@@ -69,7 +69,7 @@ npm run dev
 
 ## CI/CD 配置
 
-本專案使用 GitHub Actions 進行持續整合與部署。
+本專案使用 GitHub Actions 進行持續整合與測試。
 
 ### 工作流程
 
@@ -79,44 +79,28 @@ npm run dev
    - 建置測試
    - 安全掃描
 
-2. **預覽部署**: 非 main 分支的部署
+> **注意**: 部署功能已暫時停用，待未來規劃完成後再啟用。
+
+### 未來部署規劃 (待啟用)
+
+當準備好部署時，可以啟用以下功能：
+
+1. **預覽部署**: 非 main 分支的部署
    - 自動部署到 Vercel 預覽環境
    - 每個 PR 都有預覽連結
 
-3. **生產部署**: main 分支的部署
+2. **生產部署**: main 分支的部署
    - 自動部署到 Vercel 生產環境
    - 僅在測試通過後執行
 
-### 設置 GitHub Secrets
+#### 部署設置步驟
 
-要使用自動部署功能，需要在 GitHub 倉庫設置以下 Secrets：
-
-1. **Vercel 配置** (必需)
+1. **設置 GitHub Secrets**:
    - `VERCEL_TOKEN`: Vercel 訪問令牌
    - `VERCEL_ORG_ID`: Vercel 組織 ID
    - `VERCEL_PROJECT_ID`: Vercel 專案 ID
 
-#### 獲取 Vercel 憑證
-
-1. 安裝 Vercel CLI:
-   ```bash
-   npm i -g vercel
-   ```
-
-2. 登入 Vercel:
-   ```bash
-   vercel login
-   ```
-
-3. 獲取 Token:
-   ```bash
-   vercel tokens create
-   ```
-
-4. 獲取組織和專案 ID:
-   ```bash
-   cat .vercel/project.json
-   ```
+2. **取消註解 workflow 中的部署步驟**
 
 ### 手動部署
 
