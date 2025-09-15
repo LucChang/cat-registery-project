@@ -17,6 +17,7 @@ export default function NewCatPage() {
     gender: '',
     birthDate: '',
     description: '',
+    isCaged: false,
     picture: null as File | string | null
   })
 
@@ -166,6 +167,22 @@ export default function NewCatPage() {
                       placeholder="描述貓咪的特徵、個性等（選填）"
                       rows={4}
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="isCaged">關籠狀態</Label>
+                    <Select 
+                      onValueChange={(value) => handleInputChange('isCaged', value)}
+                      defaultValue="false"
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="選擇關籠狀態" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="false">不關籠</SelectItem>
+                        <SelectItem value="true">關籠</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>

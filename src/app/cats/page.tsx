@@ -6,6 +6,21 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
 
+interface HealthRecord {
+  id: string
+  date: string
+  timeSlot: string
+  dryFood: string
+  stool: string
+  urine: string
+  vomiting: string
+  cough: string
+  symptoms: string
+  behavior?: string
+  notes?: string
+  recordedAt: string
+}
+
 interface Cat {
   id: string
   name: string
@@ -22,11 +37,14 @@ interface Cat {
     name: string
     email: string
   }
+  healthRecords: HealthRecord[]
 }
 
 export default function CatsPage() {
   const [cats, setCats] = useState<Cat[]>([])
   const [loading, setLoading] = useState(true)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   useEffect(() => {
     fetchCats()
@@ -46,6 +64,31 @@ export default function CatsPage() {
     } catch (error) {
       console.error('獲取貓咪資料失敗:', error)
       setLoading(false)
+    }
+  }
+
+  const handleDeleteCat = async (catId: string, catName: string) => {
+    if (confirm(`確定要刪除貓咪「${catName}」嗎？\n\n注意：此操作將刪除該貓咪的所有資料，包括健康記錄和醫療記錄，且無法復原。`)) {
+      try {
+        setDeletingId(catId)
+        const response = await fetch(`/api/cats/${catId}`, {
+          method: 'DELETE',
+        })
+        
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.message || '刪除失敗')
+        }
+        
+        // 從列表中移除已刪除的貓咪
+        setCats(cats.filter(cat => cat.id !== catId))
+        alert('貓咪已成功刪除！')
+      } catch (error) {
+        console.error('刪除貓咪失敗:', error)
+        alert(`刪除失敗：${error instanceof Error ? error.message : '未知錯誤'}`)
+      } finally {
+        setDeletingId(null)
+      }
     }
   }
 
@@ -76,9 +119,15 @@ export default function CatsPage() {
             </Link>
           </div>
         </header>
+        <div className='flex justify-center mb-[8px] '>
+          <input type="text" placeholder="搜索貓咪" id="cat-input" className="w-full max-w-md px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {cats.map((cat) => (
+          {cats.filter(cat => 
+            !searchTerm || 
+            cat.name.toLowerCase().includes(searchTerm.toLowerCase())
+          ).map((cat) => (
             <Card key={cat.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -89,7 +138,7 @@ export default function CatsPage() {
                 {cat.imageUrl && (
                   <div className="mb-4">
                     <Image 
-                      src={cat.imageUrl.startsWith('http') ? cat.imageUrl : cat.imageUrl} 
+                      src={cat.imageUrl && (cat.imageUrl.startsWith('http') || cat.imageUrl.startsWith('/')) ? cat.imageUrl : '/placeholder-cat.jpg'} 
                       alt={cat.name}
                       width={400}
                       height={192}
@@ -134,6 +183,23 @@ export default function CatsPage() {
                       <span className="font-medium">飼主：</span>{cat.owner.name}
                     </p>
                   )}
+                  
+                  {/* 顯示最新健康紀錄 */}
+                  {cat.healthRecords && cat.healthRecords.length > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">最新健康紀錄</h4>
+                      <div className="text-xs space-y-1 text-gray-600">
+                        <p><span className="font-medium">日期：</span>{cat.healthRecords[0].date}</p>
+                        <p><span className="font-medium">時段：</span>{cat.healthRecords[0].timeSlot}</p>
+                        <p><span className="font-medium">乾食：</span>{cat.healthRecords[0].dryFood}</p>
+                        <p><span className="font-medium">大便：</span>{cat.healthRecords[0].stool}</p>
+                        <p><span className="font-medium">尿：</span>{cat.healthRecords[0].urine}</p>
+                        {cat.healthRecords[0].symptoms && (
+                          <p><span className="font-medium">症狀：</span>{cat.healthRecords[0].symptoms}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 space-y-2">
                   <Link href={`/cats/${cat.id}`}>
@@ -158,6 +224,15 @@ export default function CatsPage() {
                       </Button>
                     </Link>
                   </div>
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => handleDeleteCat(cat.id, cat.name)}
+                    disabled={deletingId === cat.id}
+                  >
+                    {deletingId === cat.id ? '刪除中...' : '刪除貓咪'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>

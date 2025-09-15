@@ -73,11 +73,28 @@ export default function NewRecordPage() {
     }
 
     try {
+      const endpoint = recordType === 'health' ? '/api/health-records' : '/api/medical-records'
       const recordData = recordType === 'health' ? healthData : medicalData
-      console.log('新增記錄:', { catId: selectedCatId, type: recordType, data: recordData })
+      
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...recordData,
+          catId: selectedCatId
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.message || '新增失敗')
+      }
       
       alert('記錄新增成功！')
-      window.location.href = '/dashboard'
+      window.location.href = '/cats'
     } catch (error) {
       console.error('新增記錄失敗:', error)
       alert('新增失敗，請稍後再試')

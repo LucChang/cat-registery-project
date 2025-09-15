@@ -61,7 +61,8 @@ model MedicalRecord {
   description String?
   diagnosis   String?
   treatment   String?
-  medication  String?
+  medicationType String  // Type of medication
+  medicationNotes String? // Special instructions for medication
   veterinarian String?
   visitDate   DateTime
   nextVisit   DateTime?
@@ -69,8 +70,24 @@ model MedicalRecord {
   notes       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Medication administration records
+  medicationRecords MedicationRecord[]
   
   // 關聯
   catId String
   cat   Cat    @relation(fields: [catId], references: [id])
+}
+
+model MedicationRecord {
+  id          String   @id @default(cuid())
+  date        DateTime @default(now())
+  volunteer   String   // Volunteer who administered the medication
+  morningDose Boolean  @default(false) // Morning medication given
+  eveningDose Boolean  @default(false) // Evening medication given
+  notes       String?
+  
+  // Relation to medical record
+  medicalRecordId String
+  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id])
 }

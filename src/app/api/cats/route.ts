@@ -12,6 +12,18 @@ export async function GET() {
             name: true,
             email: true
           }
+        },
+        healthRecords: {
+          orderBy: {
+            date: 'desc'
+          },
+          take: 1
+        },
+        medicalRecords: {
+          orderBy: {
+            createdAt: 'desc'
+          },
+          take: 1
         }
       },
       orderBy: {
@@ -30,12 +42,13 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData()
     const name = formData.get('name') as string
-    const breed = formData.get('breed') as string
-    const color = formData.get('color') as string
-    const gender = formData.get('gender') as string
-    const birthDate = formData.get('birthDate') as string
-    const description = formData.get('description') as string
-    const pictureFile = formData.get('picture') as File | null
+      const breed = formData.get('breed') as string
+      const color = formData.get('color') as string
+      const gender = formData.get('gender') as string
+      const birthDate = formData.get('birthDate') as string
+      const description = formData.get('description') as string
+      const isCaged = formData.get('isCaged') === 'true'
+      const pictureFile = formData.get('picture') as File | null
 
     let pictureUrl = formData.get('picture') as string | null
 
@@ -72,14 +85,26 @@ export async function POST(request: Request) {
         birthDate: birthDate ? new Date(birthDate) : null,
         description,
         imageUrl: pictureUrl,
-        ownerId, // 添加 ownerId 欄位
-        // Remove isCaged field as it's not defined in the Prisma schema
+        isCaged,
+        ownerId,
       },
     })
 
     return NextResponse.json({ message: 'Cat registered successfully', cat: newCat }, { status: 200 })
   } catch (error) {
     console.error('Error registering cat:', error)
-    return NextResponse.json({ message: 'Error registering cat', error: (error as Error).message }, { status: 500 })
+    
+    // 確保錯誤訊息是字串
+    let errorMessage = '註冊貓咪時發生錯誤'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    } else if (typeof error === 'string') {
+      errorMessage = error
+    }
+    
+    return NextResponse.json({ 
+      message: errorMessage,
+      error: errorMessage 
+    }, { status: 500 })
   }
 }

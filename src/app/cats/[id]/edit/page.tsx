@@ -21,7 +21,7 @@ interface Cat {
   imageUrl?: string
 }
 
-export default function EditCatPage({ params }: { params: { id: string } }) {
+export default function EditCatPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,10 +35,21 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
     description: '',
     imageUrl: ''
   })
+  const [catId, setCatId] = useState<string>('')
 
   useEffect(() => {
-    fetchCatData()
-  }, [params.id])
+    const unwrapParams = async () => {
+      const resolvedParams = await params
+      setCatId(resolvedParams.id)
+    }
+    unwrapParams()
+  }, [params])
+
+  useEffect(() => {
+    if (catId) {
+      fetchCatData()
+    }
+  }, [catId, fetchCatData])
 
   const fetchCatData = useCallback(async () => {
     try {
@@ -55,7 +66,7 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
       console.error('獲取貓咪資料失敗:', error)
       setLoading(false)
     }
-  }, [params.id])
+  }, [catId, params.id])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -66,12 +77,12 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
     setCat(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
     setSaving(true)
 
     try {
-      const response = await fetch(`/api/cats/${params.id}`, {
+      const response = await fetch(`/api/cats/${catId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -86,14 +97,14 @@ export default function EditCatPage({ params }: { params: { id: string } }) {
       }
 
       alert('更新成功！')
-      router.push(`/cats/${params.id}`)
+      router.push(`/cats/${catId}`)
     } catch (error) {
       console.error('更新失敗:', error)
       alert('更新失敗，請稍後再試')
     } finally {
       setSaving(false)
     }
-  }
+  }, [cat, catId, router])
 
   if (loading) {
     return (

@@ -82,6 +82,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    
     // 確保貓咪存在
     const existingCat = await prisma.cat.findUnique({
       where: { id: id }
@@ -91,13 +92,26 @@ export async function DELETE(
       return NextResponse.json({ message: '找不到貓咪' }, { status: 404 })
     }
 
-    // 刪除貓咪
-    await prisma.cat.delete({
-      where: { id: id }
+    // 使用事務來刪除所有相關資料
+    await prisma.$transaction(async (tx) => {
+      // 先刪除健康記錄
+      await tx.healthRecord.deleteMany({
+        where: { catId: id }
+      })
+
+      // 再刪除醫療記錄
+      await tx.medicalRecord.deleteMany({
+        where: { catId: id }
+      })
+
+      // 最後刪除貓咪
+      await tx.cat.delete({
+        where: { id: id }
+      })
     })
 
     return NextResponse.json({ 
-      message: '貓咪已刪除' 
+      message: '貓咪及其所有相關資料已成功刪除' 
     }, { status: 200 })
   } catch (error) {
     console.error('Error deleting cat:', error)

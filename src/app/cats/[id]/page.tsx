@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 
 interface Cat {
   
@@ -23,50 +23,31 @@ interface Cat {
 
 export default function CatDetailPage() {
   const params = useParams()
+  const router = useRouter()
   const catId = params.id as string
   const [cat, setCat] = useState<Cat | null>(null)
   const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(false)
   // const 
   useEffect(() => {
-    // TODO: 從 API 獲取貓咪詳細資料
-    // 現在使用模擬資料
-    setTimeout(() => {
-      const mockCats: Record<string, Cat> = {
-        '1': {
-          id: '1',
-          name: '小橘',
-          breed: '橘貓',
-          color: '橘色',
-          gender: '公',
-          birthDate: '2022-05-15',
-          description: '活潑好動的小橘貓，喜歡玩毛線球',
-          createdAt: '2024-01-15'
-        },
-        '2': {
-          id: '2',
-          name: '咪咪',
-          breed: '英國短毛貓',
-          color: '灰色',
-          gender: '母',
-          birthDate: '2021-08-22',
-          description: '溫柔安靜的貓咪，喜歡曬太陽',
-          createdAt: '2024-01-10'
-        },
-        '3': {
-          id: '3',
-          name: '雪球',
-          breed: '波斯貓',
-          color: '白色',
-          gender: '母',
-          birthDate: '2023-01-10',
-          description: '毛茸茸的白色貓咪，很愛乾淨',
-          createdAt: '2024-02-01'
-        }
+    fetchCatDetail()
+  }, [catId, fetchCatDetail])
+
+  const fetchCatDetail = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/cats/${catId}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.message || '無法獲取貓咪資料')
       }
       
-      setCat(mockCats[catId] || null)
+      setCat(data.cat)
       setLoading(false)
-    }, 1000)
+    } catch (error) {
+      console.error('獲取貓咪資料失敗:', error)
+      setLoading(false)
+    }
   }, [catId])
 
   if (loading) {
@@ -105,6 +86,32 @@ export default function CatDetailPage() {
       return `${ageInYears} 歲 ${ageInMonths} 個月`
     }
     return `${ageInMonths} 個月`
+  }
+
+  const handleDeleteCat = async () => {
+    if (!confirm(`確定要刪除 ${cat?.name} 的所有資料嗎？此操作無法復原。`)) {
+      return
+    }
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/cats/${catId}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || '刪除失敗')
+      }
+
+      alert('貓咪資料已成功刪除！')
+      router.push('/cats')
+    } catch (error) {
+      console.error('刪除貓咪失敗:', error)
+      alert('刪除失敗，請稍後再試')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -248,6 +255,14 @@ export default function CatDetailPage() {
                     編輯資料
                   </Button>
                 </Link>
+                <Button 
+                  variant="destructive" 
+                  className="w-full"
+                  disabled={deleting}
+                  onClick={handleDeleteCat}
+                >
+                  {deleting ? '刪除中...' : '刪除貓咪'}
+                </Button>
               </CardContent>
             </Card>
           </div>
