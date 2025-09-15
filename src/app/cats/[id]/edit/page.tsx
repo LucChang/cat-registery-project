@@ -49,11 +49,11 @@ export default function EditCatPage({ params }: { params: Promise<{ id: string }
     if (catId) {
       fetchCatData()
     }
-  }, [catId, fetchCatData])
+  }, [catId])
 
   const fetchCatData = useCallback(async () => {
     try {
-      const response = await fetch(`/api/cats/${params.id}`)
+      const response = await fetch(`/api/cats/${catId}`)
       const data = await response.json()
       
       if (!response.ok) {
@@ -66,7 +66,7 @@ export default function EditCatPage({ params }: { params: Promise<{ id: string }
       console.error('獲取貓咪資料失敗:', error)
       setLoading(false)
     }
-  }, [catId, params.id])
+  }, [catId])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target

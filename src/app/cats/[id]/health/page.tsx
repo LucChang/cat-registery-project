@@ -46,9 +46,9 @@ export default function CatHealthPage({ params }: { params: Promise<{ id: string
     if (catId) {
       fetchCatAndHealthRecords()
     }
-  }, [catId, fetchCatAndHealthRecords])
+  }, [catId])
 
-  const fetchCatAndHealthRecords = useCallback(async () => {
+  const fetchCatAndHealthRecords = async () => {
     try {
       // 獲取貓咪資訊
       const catResponse = await fetch(`/api/cats/${catId}`)
@@ -74,7 +74,7 @@ export default function CatHealthPage({ params }: { params: Promise<{ id: string
       console.error('獲取資料失敗:', error)
       setLoading(false)
     }
-  }, [catId])
+  }
 
   if (loading) {
     return (

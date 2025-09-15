@@ -44,10 +44,16 @@ model Cat {
 
 model HealthRecord {
   id        String   @id @default(cuid())
-  weight    Float?
-  height    Float?
-  temperature Float?
-  notes     String?
+  date      String   // 日期
+  timeSlot  String   // 時段（早上/下午/晚上）
+  dryFood   String   // 乾食狀況
+  stool     String   // 大便狀況
+  urine     String   // 尿尿狀況
+  vomiting  String   // 嘔吐狀況
+  cough     String   // 咳嗽狀況
+  symptoms  String   // 症狀描述
+  behavior  String?  // 行為觀察（可選）
+  notes     String?  // 備註（可選）
   recordedAt DateTime @default(now())
   
   // 關聯
@@ -55,39 +61,16 @@ model HealthRecord {
   cat   Cat    @relation(fields: [catId], references: [id])
 }
 
-model MedicalRecord {
-  id          String   @id @default(cuid())
-  title       String
-  description String?
-  diagnosis   String?
-  treatment   String?
-  medicationType String  // Type of medication
-  medicationNotes String? // Special instructions for medication
-  veterinarian String?
-  visitDate   DateTime
-  nextVisit   DateTime?
-  cost        Float?
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  // Medication administration records
-  medicationRecords MedicationRecord[]
-  
-  // 關聯
-  catId String
-  cat   Cat    @relation(fields: [catId], references: [id])
-}
 
 model MedicationRecord {
   id          String   @id @default(cuid())
   date        DateTime @default(now())
-  volunteer   String   // Volunteer who administered the medication
-  morningDose Boolean  @default(false) // Morning medication given
-  eveningDose Boolean  @default(false) // Evening medication given
+  volunteer   String   // 給藥的志工
+  morningDose Boolean  @default(false) // 早上給藥
+  eveningDose Boolean  @default(false) // 晚上給藥
   notes       String?
   
-  // Relation to medical record
+  // 關聯到醫療紀錄
   medicalRecordId String
   medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id])
 }
