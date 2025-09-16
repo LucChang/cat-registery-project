@@ -72,6 +72,21 @@ export default function NewRecordPage() {
       return
     }
 
+    // 驗證必填欄位
+    if (recordType === 'health') {
+      if (!healthData.date || !healthData.timeSlot || !healthData.dryFood || 
+          !healthData.stool || !healthData.urine || !healthData.vomiting || !healthData.cough) {
+        alert('請填寫所有健康記錄的必填欄位')
+        return
+      }
+    } else if (recordType === 'medical') {
+      if (!medicalData.title || !medicalData.description || !medicalData.diagnosis || 
+          !medicalData.treatment || !medicalData.medication || !medicalData.veterinarian || !medicalData.visitDate) {
+        alert('請填寫所有醫療記錄的必填欄位')
+        return
+      }
+    }
+
     try {
       const endpoint = recordType === 'health' ? '/api/health-records' : '/api/medical-records'
       const recordData = recordType === 'health' ? healthData : medicalData
@@ -94,7 +109,7 @@ export default function NewRecordPage() {
       }
       
       alert('記錄新增成功！')
-      window.location.href = '/cats'
+      window.location.href = `/cats/${selectedCatId}/medical`
     } catch (error) {
       console.error('新增記錄失敗:', error)
       alert('新增失敗，請稍後再試')
@@ -325,7 +340,7 @@ export default function NewRecordPage() {
 
               {/* 醫療記錄表單 */}
               {recordType === 'medical' && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h3 className="text-lg font-medium">醫療記錄</h3>
                   
                   <div className="space-y-2">
@@ -334,7 +349,7 @@ export default function NewRecordPage() {
                       id="title"
                       value={medicalData.title}
                       onChange={(e) => handleMedicalDataChange('title', e.target.value)}
-                      placeholder="例：定期健康檢查"
+                      placeholder="例：定期健康檢查、疫苗接種、疾病治療"
                       required
                     />
                   </div>
@@ -362,68 +377,95 @@ export default function NewRecordPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="veterinarian">獸醫師 *</Label>
+                      <Input
+                        id="veterinarian"
+                        value={medicalData.veterinarian}
+                        onChange={(e) => handleMedicalDataChange('veterinarian', e.target.value)}
+                        placeholder="負責診療的獸醫師姓名"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="cost">診療費用</Label>
+                      <Input
+                        id="cost"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={medicalData.cost}
+                        onChange={(e) => handleMedicalDataChange('cost', e.target.value)}
+                        placeholder="總費用 (新台幣)"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="veterinarian">獸醫師</Label>
-                    <Input
-                      id="veterinarian"
-                      value={medicalData.veterinarian}
-                      onChange={(e) => handleMedicalDataChange('veterinarian', e.target.value)}
-                      placeholder="獸醫師姓名"
+                    <Label htmlFor="description">詳細描述 *</Label>
+                    <Textarea
+                      id="description"
+                      value={medicalData.description}
+                      onChange={(e) => handleMedicalDataChange('description', e.target.value)}
+                      placeholder="描述貓咪的就診原因、症狀表現、就診過程等"
+                      rows={3}
+                      required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="diagnosis">診斷</Label>
+                    <Label htmlFor="diagnosis">診斷結果 *</Label>
                     <Textarea
                       id="diagnosis"
                       value={medicalData.diagnosis}
                       onChange={(e) => handleMedicalDataChange('diagnosis', e.target.value)}
-                      placeholder="獸醫師的診斷結果"
+                      placeholder="獸醫師給出的正式診斷"
                       rows={2}
+                      required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="treatment">治療方式</Label>
+                    <Label htmlFor="treatment">治療方案 *</Label>
                     <Textarea
                       id="treatment"
                       value={medicalData.treatment}
                       onChange={(e) => handleMedicalDataChange('treatment', e.target.value)}
-                      placeholder="採用的治療方式"
+                      placeholder="醫生建議的治療方式、療程安排等"
                       rows={2}
+                      required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="medication">用藥</Label>
-                      <Input
-                        id="medication"
-                        value={medicalData.medication}
-                        onChange={(e) => handleMedicalDataChange('medication', e.target.value)}
-                        placeholder="處方藥物"
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="medication">用藥資訊 *</Label>
+                    <Textarea
+                      id="medication"
+                      value={medicalData.medication}
+                      onChange={(e) => handleMedicalDataChange('medication', e.target.value)}
+                      placeholder="處方藥物名稱、劑量、使用頻率、使用天數等詳細資訊"
+                      rows={3}
+                      required
+                    />
+                  </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="cost">費用</Label>
-                      <Input
-                        id="cost"
-                        type="number"
-                        value={medicalData.cost}
-                        onChange={(e) => handleMedicalDataChange('cost', e.target.value)}
-                        placeholder="診療費用"
-                      />
-                    </div>
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">💊 用藥提醒</h4>
+                    <p className="text-sm text-blue-800">
+                      用藥資訊填寫完成後，您可以在醫療紀錄頁面為每天的用藥情況進行記錄，
+                      包括早上和晚上的劑量給予情況。
+                    </p>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="medicalNotes">備註</Label>
+                    <Label htmlFor="medicalNotes">其他備註</Label>
                     <Textarea
                       id="medicalNotes"
                       value={medicalData.notes}
                       onChange={(e) => handleMedicalDataChange('notes', e.target.value)}
-                      placeholder="其他注意事項或備註"
+                      placeholder="其他需要注意的事項、特殊護理要求、回診提醒等"
                       rows={3}
                     />
                   </div>
