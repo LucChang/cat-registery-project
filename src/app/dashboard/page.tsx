@@ -70,6 +70,25 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
+          {/* 用藥管理卡片 */}
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                💊 用藥管理
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-600 mb-4">
+                管理貓咪的用藥記錄與提醒
+              </p>
+              <Link href="/dashboard/medication">
+                <Button className="w-full">
+                  管理用藥
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
           {/* 註冊新貓咪卡片 */}
           <Card className="hover:shadow-lg transition-shadow">
             <CardHeader>
