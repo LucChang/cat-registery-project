@@ -107,38 +107,6 @@ export default function DashboardPage() {
               </Link>
             </CardContent>
           </Card>
-
-          {/* 最近活動卡片 */}
-          <Card className="md:col-span-2 lg:col-span-3">
-            <CardHeader>
-              <CardTitle>最近活動</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <p className="font-medium">小橘新增了體重記錄</p>
-                    <p className="text-sm text-gray-600">2 小時前</p>
-                  </div>
-                  <span className="text-sm text-blue-600">健康記錄</span>
-                </div>
-                <div className="flex items-center justify-between border-b pb-2">
-                  <div>
-                    <p className="font-medium">咪咪完成了定期檢查</p>
-                    <p className="text-sm text-gray-600">1 天前</p>
-                  </div>
-                  <span className="text-sm text-green-600">醫療記錄</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">新貓咪「雪球」已註冊</p>
-                    <p className="text-sm text-gray-600">3 天前</p>
-                  </div>
-                  <span className="text-sm text-purple-600">新註冊</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

@@ -148,9 +148,7 @@ export default function MedicationDashboard() {
   const getFrequencyText = (record: MedicationRecord) => {
     const times = [];
     if (record.morning) times.push('早上');
-    if (record.afternoon) times.push('下午');
     if (record.evening) times.push('晚上');
-    if (record.night) times.push('睡前');
     return times.join('、');
   };
 
@@ -284,29 +282,11 @@ export default function MedicationDashboard() {
                   <label className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={formData.afternoon}
-                      onChange={(e) => setFormData({...formData, afternoon: e.target.checked})}
-                      className="mr-2"
-                    />
-                    下午
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
                       checked={formData.evening}
                       onChange={(e) => setFormData({...formData, evening: e.target.checked})}
                       className="mr-2"
                     />
                     晚上
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.night}
-                      onChange={(e) => setFormData({...formData, night: e.target.checked})}
-                      className="mr-2"
-                    />
-                    睡前
                   </label>
                 </div>
               </div>

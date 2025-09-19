@@ -121,8 +121,11 @@ export default function MedicalRecordsPage({ params }: { params: Promise<{ id: s
             <p className="text-gray-600 mt-2">查看所有醫療狀態與用藥記錄</p>
           </div>
           <div className="space-x-2">
+            <Link href={`/cats/${catId}/feeding-medication`}>
+              <Button>餵藥紀錄</Button>
+            </Link>
             <Link href={`/cats/${catId}/records/new?type=medical`}>
-              <Button>新增醫療紀錄</Button>
+              <Button variant="outline">新增醫療紀錄</Button>
             </Link>
             <Link href="/cats">
               <Button variant="outline">返回清單</Button>

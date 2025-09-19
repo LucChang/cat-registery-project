@@ -245,9 +245,9 @@ export default function CatDetailPage() {
                     新增健康記錄
                   </Button>
                 </Link>
-                <Link href={`/records/new?catId=${cat.id}&type=medical`}>
+                <Link href={`/cats/${cat.id}/feeding-medication`}>
                   <Button variant="outline" className="w-full">
-                    新增醫療記錄
+                    餵藥紀錄
                   </Button>
                 </Link>
                 <Link href={`/cats/${cat.id}/edit`}>

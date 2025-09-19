@@ -6,10 +6,10 @@ const prisma = new PrismaClient()
 // GET - 獲取特定貓咪的醫療紀錄
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
 
     const medicalRecords = await prisma.medicalRecord.findMany({
       where: { catId: id },
@@ -34,10 +34,10 @@ export async function GET(
 // POST - 創建新的醫療紀錄
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params
+    const { id } = await params
     const body = await request.json()
 
     const {
