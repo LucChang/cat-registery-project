@@ -32,15 +32,14 @@ export default function NewRecordPage() {
     notes: ''
   })
   const [medicalData, setMedicalData] = useState({
-    title: '',
+    medicationName: '',
+    dosage: '',
+    frequency: '',
     description: '',
-    diagnosis: '',
-    treatment: '',
-    medication: '',
-    veterinarian: '',
     visitDate: '',
-    nextVisit: '',
-    cost: '',
+    volunteer: '',
+    morningDose: false,
+    eveningDose: false,
     notes: ''
   })
 
@@ -80,36 +79,96 @@ export default function NewRecordPage() {
         return
       }
     } else if (recordType === 'medical') {
-      if (!medicalData.title || !medicalData.description || !medicalData.diagnosis || 
-          !medicalData.treatment || !medicalData.medication || !medicalData.veterinarian || !medicalData.visitDate) {
-        alert('請填寫所有醫療記錄的必填欄位')
+      if (!medicalData.volunteer.trim()) {
+        alert('請輸入餵藥者名稱')
+        return
+      }
+      if (!medicalData.morningDose && !medicalData.eveningDose) {
+        alert('請至少選擇一個餵藥時間（早上或晚上）')
         return
       }
     }
 
     try {
-      const endpoint = recordType === 'health' ? '/api/health-records' : '/api/medical-records'
-      const recordData = recordType === 'health' ? healthData : medicalData
+      let result
       
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...recordData,
-          catId: selectedCatId
+      if (recordType === 'health') {
+        const response = await fetch('/api/health-records', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...healthData,
+            catId: selectedCatId
+          })
         })
-      })
+        
+        result = await response.json()
+      } else {
+        // 首先創建醫療記錄作為用藥記錄的容器
+        const medicalResponse = await fetch('/api/medical-records', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            catId: selectedCatId,
+            title: '日常餵藥記錄',
+            description: medicalData.description || '日常餵藥記錄',
+            diagnosis: '',
+            treatment: '定期餵藥',
+            medication: '一般藥物',
+            veterinarian: medicalData.volunteer,
+            visitDate: new Date().toISOString().split('T')[0],
+            nextVisit: null,
+            cost: null,
+            notes: medicalData.notes
+          })
+        })
 
-      const result = await response.json()
+        if (!medicalResponse.ok) {
+          throw new Error('創建醫療記錄失敗')
+        }
 
-      if (!response.ok) {
+        const medicalResult = await medicalResponse.json()
+
+        // 創建用藥記錄
+        const medicationResponse = await fetch('/api/medication-records', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            medicalRecordId: medicalResult.medicalRecord.id,
+            date: new Date().toISOString().split('T')[0],
+            volunteer: medicalData.volunteer,
+            morningDose: medicalData.morningDose,
+            eveningDose: medicalData.eveningDose,
+            notes: medicalData.description || '日常餵藥記錄'
+          })
+        })
+
+        if (!medicationResponse.ok) {
+          throw new Error('創建用藥記錄失敗')
+        }
+
+        const medicationResult = await medicationResponse.json()
+
+        // 回傳整合後的結果
+        result = {
+          success: true,
+          medicalRecord: medicalResult.medicalRecord,
+          medicationRecord: medicationResult.medicationRecord
+        }
+      }
+
+       if (!result || result.error) {
         throw new Error(result.message || '新增失敗')
       }
       
       alert('記錄新增成功！')
-      window.location.href = `/cats/${selectedCatId}/medical`
+      window.location.href = `/cats/${selectedCatId}`
     } catch (error) {
       console.error('新增記錄失敗:', error)
       alert('新增失敗，請稍後再試')
@@ -178,7 +237,7 @@ export default function NewRecordPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="health">健康記錄</SelectItem>
-                    <SelectItem value="medical">醫療記錄</SelectItem>
+                    <SelectItem value="medical">用藥紀錄</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -338,125 +397,46 @@ export default function NewRecordPage() {
                 </div>
               )}
 
-              {/* 醫療記錄表單 */}
+              {/* 用藥紀錄表單 */}
               {recordType === 'medical' && (
                 <div className="space-y-6">
-                  <h3 className="text-lg font-medium">醫療記錄</h3>
+                  <h3 className="text-lg font-medium">用藥紀錄</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="title">標題 *</Label>
+                    <Label htmlFor="volunteer">餵藥者名稱 *</Label>
                     <Input
-                      id="title"
-                      value={medicalData.title}
-                      onChange={(e) => handleMedicalDataChange('title', e.target.value)}
-                      placeholder="例：定期健康檢查、疫苗接種、疾病治療"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="visitDate">就診日期 *</Label>
-                      <Input
-                        id="visitDate"
-                        type="date"
-                        value={medicalData.visitDate}
-                        onChange={(e) => handleMedicalDataChange('visitDate', e.target.value)}
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="nextVisit">下次預約日期</Label>
-                      <Input
-                        id="nextVisit"
-                        type="date"
-                        value={medicalData.nextVisit}
-                        onChange={(e) => handleMedicalDataChange('nextVisit', e.target.value)}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="veterinarian">獸醫師 *</Label>
-                      <Input
-                        id="veterinarian"
-                        value={medicalData.veterinarian}
-                        onChange={(e) => handleMedicalDataChange('veterinarian', e.target.value)}
-                        placeholder="負責診療的獸醫師姓名"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="cost">診療費用</Label>
-                      <Input
-                        id="cost"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={medicalData.cost}
-                        onChange={(e) => handleMedicalDataChange('cost', e.target.value)}
-                        placeholder="總費用 (新台幣)"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">詳細描述 *</Label>
-                    <Textarea
-                      id="description"
-                      value={medicalData.description}
-                      onChange={(e) => handleMedicalDataChange('description', e.target.value)}
-                      placeholder="描述貓咪的就診原因、症狀表現、就診過程等"
-                      rows={3}
+                      id="volunteer"
+                      value={medicalData.volunteer}
+                      onChange={(e) => handleMedicalDataChange('volunteer', e.target.value)}
+                      placeholder="輸入負責餵藥的志工名稱"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="diagnosis">診斷結果 *</Label>
-                    <Textarea
-                      id="diagnosis"
-                      value={medicalData.diagnosis}
-                      onChange={(e) => handleMedicalDataChange('diagnosis', e.target.value)}
-                      placeholder="獸醫師給出的正式診斷"
-                      rows={2}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="treatment">治療方案 *</Label>
-                    <Textarea
-                      id="treatment"
-                      value={medicalData.treatment}
-                      onChange={(e) => handleMedicalDataChange('treatment', e.target.value)}
-                      placeholder="醫生建議的治療方式、療程安排等"
-                      rows={2}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="medication">用藥資訊 *</Label>
-                    <Textarea
-                      id="medication"
-                      value={medicalData.medication}
-                      onChange={(e) => handleMedicalDataChange('medication', e.target.value)}
-                      placeholder="處方藥物名稱、劑量、使用頻率、使用天數等詳細資訊"
-                      rows={3}
-                      required
-                    />
-                  </div>
-
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">💊 用藥提醒</h4>
-                    <p className="text-sm text-blue-800">
-                      用藥資訊填寫完成後，您可以在醫療紀錄頁面為每天的用藥情況進行記錄，
-                      包括早上和晚上的劑量給予情況。
-                    </p>
+                    <Label>餵藥時間 *</Label>
+                    <div className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="morningDose"
+                          checked={medicalData.morningDose}
+                          onChange={(e) => handleMedicalDataChange('morningDose', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="morningDose" className="font-normal">早上</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="eveningDose"
+                          checked={medicalData.eveningDose}
+                          onChange={(e) => handleMedicalDataChange('eveningDose', e.target.checked)}
+                          className="rounded border-gray-300"
+                        />
+                        <Label htmlFor="eveningDose" className="font-normal">晚上</Label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-2">

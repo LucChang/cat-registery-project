@@ -14,15 +14,40 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // TODO: 實作登入/註冊邏輯
-    if (isSignUp) {
-      console.log('註冊:', { email, password, name })
-    } else {
-      console.log('登入:', { email, password })
-    }
     
-    // 暫時直接導向主控台
-    window.location.href = '/dashboard'
+    try {
+      if (isSignUp) {
+        // 註冊邏輯
+        const response = await fetch('/api/auth/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password, name }),
+        })
+        
+        const data = await response.json()
+        
+        if (!response.ok) {
+          throw new Error(data.error || '註冊失敗')
+        }
+        
+        alert('註冊成功！')
+        // 註冊成功後自動登入或導向登入頁面
+        setIsSignUp(false)
+        setEmail('')
+        setPassword('')
+        setName('')
+      } else {
+        // 登入邏輯
+        console.log('登入:', { email, password })
+        // TODO: 實作登入 API 調用
+        window.location.href = '/dashboard'
+      }
+    } catch (error) {
+      console.error('操作失敗:', error)
+      alert(`操作失敗: ${error instanceof Error ? error.message : '請稍後再試'}`)
+    }
   }
 
   return (
