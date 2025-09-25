@@ -130,9 +130,14 @@ export default function CatsPage() {
           ).map((cat) => (
             <Card key={cat.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  🐱 {cat.name}
-                </CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    🐱 {cat.name}
+                  </CardTitle>
+                  <Button variant = 'record'onClick={() => window.location.href = 'records/new'}>
+                     紀錄
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 {cat.imageUrl && (

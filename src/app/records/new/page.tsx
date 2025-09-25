@@ -32,15 +32,11 @@ export default function NewRecordPage() {
     notes: ''
   })
   const [medicalData, setMedicalData] = useState({
-    medicationName: '',
-    dosage: '',
-    frequency: '',
     description: '',
-    visitDate: '',
+    notes: '',
     volunteer: '',
     morningDose: false,
-    eveningDose: false,
-    notes: ''
+    eveningDose: false
   })
 
   useEffect(() => {
@@ -79,96 +75,35 @@ export default function NewRecordPage() {
         return
       }
     } else if (recordType === 'medical') {
-      if (!medicalData.volunteer.trim()) {
-        alert('請輸入餵藥者名稱')
-        return
-      }
-      if (!medicalData.morningDose && !medicalData.eveningDose) {
-        alert('請至少選擇一個餵藥時間（早上或晚上）')
+      if (!medicalData.volunteer || (!medicalData.morningDose && !medicalData.eveningDose)) {
+        alert('請填寫餵藥者名稱並選擇至少一個餵藥時間')
         return
       }
     }
 
     try {
-      let result
+      const endpoint = recordType === 'health' ? '/api/health-records' : '/api/medical-records'
+      const recordData = recordType === 'health' ? healthData : medicalData
       
-      if (recordType === 'health') {
-        const response = await fetch('/api/health-records', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            ...healthData,
-            catId: selectedCatId
-          })
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...recordData,
+          catId: selectedCatId
         })
-        
-        result = await response.json()
-      } else {
-        // 首先創建醫療記錄作為用藥記錄的容器
-        const medicalResponse = await fetch('/api/medical-records', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            catId: selectedCatId,
-            title: '日常餵藥記錄',
-            description: medicalData.description || '日常餵藥記錄',
-            diagnosis: '',
-            treatment: '定期餵藥',
-            medication: '一般藥物',
-            veterinarian: medicalData.volunteer,
-            visitDate: new Date().toISOString().split('T')[0],
-            nextVisit: null,
-            cost: null,
-            notes: medicalData.notes
-          })
-        })
+      })
 
-        if (!medicalResponse.ok) {
-          throw new Error('創建醫療記錄失敗')
-        }
+      const result = await response.json()
 
-        const medicalResult = await medicalResponse.json()
-
-        // 創建用藥記錄
-        const medicationResponse = await fetch('/api/medication-records', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            medicalRecordId: medicalResult.medicalRecord.id,
-            date: new Date().toISOString().split('T')[0],
-            volunteer: medicalData.volunteer,
-            morningDose: medicalData.morningDose,
-            eveningDose: medicalData.eveningDose,
-            notes: medicalData.description || '日常餵藥記錄'
-          })
-        })
-
-        if (!medicationResponse.ok) {
-          throw new Error('創建用藥記錄失敗')
-        }
-
-        const medicationResult = await medicationResponse.json()
-
-        // 回傳整合後的結果
-        result = {
-          success: true,
-          medicalRecord: medicalResult.medicalRecord,
-          medicationRecord: medicationResult.medicationRecord
-        }
-      }
-
-       if (!result || result.error) {
+      if (!response.ok) {
         throw new Error(result.message || '新增失敗')
       }
       
       alert('記錄新增成功！')
-      window.location.href = `/cats/${selectedCatId}`
+      window.location.href = `/cats/${selectedCatId}/medical`
     } catch (error) {
       console.error('新增記錄失敗:', error)
       alert('新增失敗，請稍後再試')
@@ -440,12 +375,31 @@ export default function NewRecordPage() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="description">用藥說明</Label>
+                    <Textarea
+                      id="description"
+                      value={medicalData.description}
+                      onChange={(e) => handleMedicalDataChange('description', e.target.value)}
+                      placeholder="描述用藥原因、注意事項等"
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-blue-900 mb-2">💊 用藥提醒</h4>
+                    <p className="text-sm text-blue-800">
+                      請確實記錄餵藥時間和餵藥者名稱，以便追蹤用藥情況。
+                      每天早上和晚上請確認是否已經餵藥。
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="medicalNotes">其他備註</Label>
                     <Textarea
                       id="medicalNotes"
                       value={medicalData.notes}
                       onChange={(e) => handleMedicalDataChange('notes', e.target.value)}
-                      placeholder="其他需要注意的事項、特殊護理要求、回診提醒等"
+                      placeholder="其他需要注意的事項"
                       rows={3}
                     />
                   </div>

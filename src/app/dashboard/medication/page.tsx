@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Home } from 'lucide-react';
 
 interface Cat {
   id: string;
@@ -54,6 +56,18 @@ export default function MedicationDashboard() {
     fetchCats();
     fetchMedicationRecords();
   }, []);
+
+  // 当选择猫咪时，重置用药时间选项
+  useEffect(() => {
+    if (formData.catId) {
+      const todayStatus = checkTodayMedicationStatus(formData.catId);
+      setFormData(prev => ({
+        ...prev,
+        morning: false,
+        evening: false
+      }));
+    }
+  }, [formData.catId]);
 
   const fetchCats = async () => {
     try {
@@ -152,6 +166,27 @@ export default function MedicationDashboard() {
     return times.join('、');
   };
 
+  const checkTodayMedicationStatus = (catId: string) => {
+    const today = new Date().toISOString().split('T')[0]; // 获取今天的日期 (YYYY-MM-DD)
+    
+    const todayRecords = medicationRecords.filter(record => {
+      const recordDate = new Date(record.createdAt).toISOString().split('T')[0];
+      return record.catId === catId && recordDate === today;
+    });
+
+    const status = {
+      morning: false,
+      evening: false
+    };
+
+    todayRecords.forEach(record => {
+      if (record.morning) status.morning = true;
+      if (record.evening) status.evening = true;
+    });
+
+    return status;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -162,10 +197,20 @@ export default function MedicationDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-4">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">用藥管理</h1>
+          <Link
+            href="/dashboard"
+            className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Home className="w-4 h-4 mr-2" />
+            返回主頁
+          </Link>
+        </div>
         <div className="bg-white rounded-lg shadow-md p-6 mb-6">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-bold text-gray-800">用藥管理主控台</h1>
+            <h2 className="text-2xl font-bold text-gray-800">用藥管理主控台</h2>
             <button
               onClick={() => setShowForm(!showForm)}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
@@ -270,24 +315,44 @@ export default function MedicationDashboard() {
                   用藥時間
                 </label>
                 <div className="flex space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.morning}
-                      onChange={(e) => setFormData({...formData, morning: e.target.checked})}
-                      className="mr-2"
-                    />
-                    早上
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.evening}
-                      onChange={(e) => setFormData({...formData, evening: e.target.checked})}
-                      className="mr-2"
-                    />
-                    晚上
-                  </label>
+                  {(() => {
+                    const todayStatus = formData.catId ? checkTodayMedicationStatus(formData.catId) : { morning: false, evening: false };
+                    
+                    return (
+                      <>
+                        {!todayStatus.morning && (
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.morning}
+                              onChange={(e) => setFormData({...formData, morning: e.target.checked})}
+                              className="mr-2"
+                            />
+                            早上
+                          </label>
+                        )}
+                        {!todayStatus.evening && (
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              checked={formData.evening}
+                              onChange={(e) => setFormData({...formData, evening: e.target.checked})}
+                              className="mr-2"
+                            />
+                            晚上
+                          </label>
+                        )}
+                        {(todayStatus.morning || todayStatus.evening) && (
+                          <span className="text-sm text-gray-500">
+                            {todayStatus.morning && todayStatus.evening 
+                              ? "今日用藥已全部登記完成" 
+                              : `今日${todayStatus.morning ? '早上' : '晚上'}已登記，還可登記${todayStatus.morning ? '晚上' : '早上'}`
+                            }
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
