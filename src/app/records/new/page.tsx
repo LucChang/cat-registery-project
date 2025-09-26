@@ -20,7 +20,6 @@ export default function NewRecordPage() {
   const [recordType, setRecordType] = useState('')
   const [loading, setLoading] = useState(true)
   const [healthData, setHealthData] = useState({
-    date: '',
     timeSlot: '',
     dryFood: '',
     stool: '',
@@ -31,6 +30,10 @@ export default function NewRecordPage() {
     behavior: '',
     notes: ''
   })
+  const [currentDate, setCurrentDate] = useState('')
+  const [existingHealthRecords, setExistingHealthRecords] = useState<string[]>([])
+  const [existingMedicalRecords, setExistingMedicalRecords] = useState<{morning: boolean, evening: boolean}>({morning: false, evening: false})
+  const [catMedicationInfo, setCatMedicationInfo] = useState<any>(null)
   const [medicalData, setMedicalData] = useState({
     description: '',
     notes: '',
@@ -57,7 +60,66 @@ export default function NewRecordPage() {
     }
     
     fetchCats()
+    
+    // 獲取當前日期
+    const getCurrentDate = async () => {
+      try {
+        const response = await fetch('/api/time')
+        if (!response.ok) {
+          throw new Error('無法獲取標準時間')
+        }
+        const data = await response.json()
+        setCurrentDate(data.date)
+      } catch (error) {
+        console.error('獲取標準時間失敗，使用本地時間:', error)
+        const today = new Date().toISOString().split('T')[0]
+        setCurrentDate(today)
+      }
+    }
+    
+    getCurrentDate()
   }, [])
+  
+  // 當選擇貓咪或日期改變時，檢查現有記錄
+  useEffect(() => {
+    const checkExistingRecords = async () => {
+      if (!selectedCatId || !currentDate) return
+      
+      try {
+        // 檢查健康記錄
+        const healthResponse = await fetch(`/api/health-records?catId=${selectedCatId}&date=${currentDate}`)
+        if (healthResponse.ok) {
+          const healthData = await healthResponse.json()
+          const existingSlots = healthData.records.map((record: any) => record.timeSlot)
+          setExistingHealthRecords(existingSlots)
+        }
+        
+        // 檢查用藥記錄
+        const medicalResponse = await fetch(`/api/medical-records?catId=${selectedCatId}&date=${currentDate}`)
+        if (medicalResponse.ok) {
+          const medicalData = await medicalResponse.json()
+          const hasMorning = medicalData.records.some((record: any) => record.morningDose)
+          const hasEvening = medicalData.records.some((record: any) => record.eveningDose)
+          setExistingMedicalRecords({ morning: hasMorning, evening: hasEvening })
+        }
+        
+        // 獲取貓咪的用藥資訊
+        const medicationResponse = await fetch(`/api/medication-management?catId=${selectedCatId}`)
+        if (medicationResponse.ok) {
+          const medicationData = await medicationResponse.json()
+          if (medicationData.medications && medicationData.medications.length > 0) {
+            // 獲取最新的用藥記錄
+            const latestMedication = medicationData.medications[0]
+            setCatMedicationInfo(latestMedication)
+          }
+        }
+      } catch (error) {
+        console.error('檢查現有記錄失敗:', error)
+      }
+    }
+    
+    checkExistingRecords()
+  }, [selectedCatId, currentDate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,7 +131,7 @@ export default function NewRecordPage() {
 
     // 驗證必填欄位
     if (recordType === 'health') {
-      if (!healthData.date || !healthData.timeSlot || !healthData.dryFood || 
+      if (!healthData.timeSlot || !healthData.dryFood || 
           !healthData.stool || !healthData.urine || !healthData.vomiting || !healthData.cough) {
         alert('請填寫所有健康記錄的必填欄位')
         return
@@ -85,15 +147,19 @@ export default function NewRecordPage() {
       const endpoint = recordType === 'health' ? '/api/health-records' : '/api/medical-records'
       const recordData = recordType === 'health' ? healthData : medicalData
       
+      // 自動添加當前日期
+      const submitData = {
+        ...recordData,
+        date: currentDate,
+        catId: selectedCatId
+      }
+      
       const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...recordData,
-          catId: selectedCatId
-        })
+        body: JSON.stringify(submitData)
       })
 
       const result = await response.json()
@@ -182,17 +248,7 @@ export default function NewRecordPage() {
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">健康記錄</h3>
                   
-                  {/* 日期 */}
-                  <div className="space-y-2">
-                    <Label htmlFor="date">日期 *</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={healthData.date}
-                      onChange={(e) => handleHealthDataChange('date', e.target.value)}
-                      required
-                    />
-                  </div>
+
 
                   {/* 時段 */}
                   <div className="space-y-2">
@@ -202,8 +258,12 @@ export default function NewRecordPage() {
                         <SelectValue placeholder="請選擇時段" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="上午">上午</SelectItem>
-                        <SelectItem value="下午">下午</SelectItem>
+                        <SelectItem value="上午" disabled={existingHealthRecords.includes('上午')}>
+                          上午 {existingHealthRecords.includes('上午') && '(已記錄)'}
+                        </SelectItem>
+                        <SelectItem value="下午" disabled={existingHealthRecords.includes('下午')}>
+                          下午 {existingHealthRecords.includes('下午') && '(已記錄)'}
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -358,8 +418,11 @@ export default function NewRecordPage() {
                           checked={medicalData.morningDose}
                           onChange={(e) => handleMedicalDataChange('morningDose', e.target.checked)}
                           className="rounded border-gray-300"
+                          disabled={existingMedicalRecords.morning}
                         />
-                        <Label htmlFor="morningDose" className="font-normal">早上</Label>
+                        <Label htmlFor="morningDose" className={`font-normal ${existingMedicalRecords.morning ? 'text-gray-400' : ''}`}>
+                          早上 {existingMedicalRecords.morning && '(已記錄)'}
+                        </Label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <input
@@ -368,8 +431,11 @@ export default function NewRecordPage() {
                           checked={medicalData.eveningDose}
                           onChange={(e) => handleMedicalDataChange('eveningDose', e.target.checked)}
                           className="rounded border-gray-300"
+                          disabled={existingMedicalRecords.evening}
                         />
-                        <Label htmlFor="eveningDose" className="font-normal">晚上</Label>
+                        <Label htmlFor="eveningDose" className={`font-normal ${existingMedicalRecords.evening ? 'text-gray-400' : ''}`}>
+                          晚上 {existingMedicalRecords.evening && '(已記錄)'}
+                        </Label>
                       </div>
                     </div>
                   </div>
@@ -385,9 +451,22 @@ export default function NewRecordPage() {
                     />
                   </div>
 
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">💊 用藥提醒</h4>
-                    <p className="text-sm text-blue-800">
+                  {catMedicationInfo && (
+                    <div className="bg-blue-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">💊 用藥資訊</h4>
+                      <div className="text-sm text-blue-800 space-y-1">
+                        <p><strong>藥物名稱:</strong> {catMedicationInfo.medicationName}</p>
+                        <p><strong>劑量:</strong> {catMedicationInfo.dosage}</p>
+                        {catMedicationInfo.notes && (
+                          <p><strong>備註:</strong> {catMedicationInfo.notes}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="bg-amber-50 p-4 rounded-lg">
+                    <h4 className="font-medium text-amber-900 mb-2">⚠️ 用藥提醒</h4>
+                    <p className="text-sm text-amber-800">
                       請確實記錄餵藥時間和餵藥者名稱，以便追蹤用藥情況。
                       每天早上和晚上請確認是否已經餵藥。
                     </p>

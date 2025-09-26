@@ -35,9 +35,10 @@ export default function MedicationDashboard() {
   const [selectedCatId, setSelectedCatId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [currentDate, setCurrentDate] = useState<string>('');
   const router = useRouter();
 
-  // Form states
+  // Form states - 移除日期字段
   const [formData, setFormData] = useState({
     catId: '',
     medicationName: '',
@@ -47,27 +48,33 @@ export default function MedicationDashboard() {
     afternoon: false,
     evening: false,
     night: false,
-    startDate: '',
-    endDate: '',
     notes: ''
   });
 
   useEffect(() => {
-    fetchCats();
-    fetchMedicationRecords();
+    const initializeData = async () => {
+      // 获取当前标准时间
+      const today = await getCurrentDate();
+      setCurrentDate(today);
+      
+      // 同时获取其他数据
+      await Promise.all([fetchCats(), fetchMedicationRecords()]);
+    };
+    
+    initializeData();
   }, []);
 
   // 当选择猫咪时，重置用药时间选项
   useEffect(() => {
-    if (formData.catId) {
-      const todayStatus = checkTodayMedicationStatus(formData.catId);
+    if (formData.catId && currentDate) {
+      const todayStatus = checkTodayMedicationStatus(formData.catId, currentDate);
       setFormData(prev => ({
         ...prev,
         morning: false,
         evening: false
       }));
     }
-  }, [formData.catId]);
+  }, [formData.catId, medicationRecords, currentDate]); // 添加 currentDate 作为依赖
 
   const fetchCats = async () => {
     try {
@@ -100,18 +107,31 @@ export default function MedicationDashboard() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.catId || !formData.medicationName || !formData.startDate || !formData.endDate) {
+    if (!formData.catId || !formData.medicationName) {
       alert('請填寫所有必填欄位');
       return;
     }
 
     try {
+      // 获取当前标准时间
+      const currentDate = await getCurrentDate();
+      const today = new Date(currentDate);
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      
+      // 构建包含日期的完整数据
+      const submitData = {
+        ...formData,
+        startDate: currentDate,
+        endDate: nextWeek.toISOString().split('T')[0]
+      };
+
       const response = await fetch('/api/medication-management', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(submitData),
       });
 
       if (response.ok) {
@@ -125,8 +145,6 @@ export default function MedicationDashboard() {
           afternoon: false,
           evening: false,
           night: false,
-          startDate: '',
-          endDate: '',
           notes: ''
         });
         setShowForm(false);
@@ -166,12 +184,25 @@ export default function MedicationDashboard() {
     return times.join('、');
   };
 
-  const checkTodayMedicationStatus = (catId: string) => {
-    const today = new Date().toISOString().split('T')[0]; // 获取今天的日期 (YYYY-MM-DD)
-    
+  const getCurrentDate = async () => {
+    try {
+      const response = await fetch('/api/time'); // 假设我们有一个时间API
+      if (response.ok) {
+        const data = await response.json();
+        return data.date || new Date().toISOString().split('T')[0];
+      }
+    } catch (error) {
+      console.error('無法獲取標準時間，使用本地時間:', error);
+    }
+    return new Date().toISOString().split('T')[0];
+  };
+
+  const checkTodayMedicationStatus = (catId: string, currentDate: string) => {
     const todayRecords = medicationRecords.filter(record => {
+      // 确保 record.createdAt 存在，然后比较日期
+      if (!record.createdAt) return false;
       const recordDate = new Date(record.createdAt).toISOString().split('T')[0];
-      return record.catId === catId && recordDate === today;
+      return record.catId === catId && recordDate === currentDate;
     });
 
     const status = {
@@ -283,31 +314,7 @@ export default function MedicationDashboard() {
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    開始日期 *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({...formData, startDate: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    到期日期 *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({...formData, endDate: e.target.value})}
-                    className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500"
-                    required
-                  />
-                </div>
               </div>
 
               <div className="mb-4">
@@ -316,7 +323,7 @@ export default function MedicationDashboard() {
                 </label>
                 <div className="flex space-x-4">
                   {(() => {
-                    const todayStatus = formData.catId ? checkTodayMedicationStatus(formData.catId) : { morning: false, evening: false };
+                    const todayStatus = formData.catId && currentDate ? checkTodayMedicationStatus(formData.catId, currentDate) : { morning: false, evening: false };
                     
                     return (
                       <>

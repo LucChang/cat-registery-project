@@ -207,11 +207,6 @@ export default function CatsPage() {
                   )}
                 </div>
                 <div className="mt-4 space-y-2">
-                  <Link href={`/cats/${cat.id}`}>
-                    <Button className="w-full" size="sm">
-                      查看詳細資料
-                    </Button>
-                  </Link>
                   <div className="flex gap-2">
                     <Link href={`/cats/${cat.id}/edit`} className="flex-1">
                       <Button variant="outline" size="sm" className="w-full">
