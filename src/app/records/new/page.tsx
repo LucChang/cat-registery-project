@@ -35,11 +35,16 @@ export default function NewRecordPage() {
   const [existingMedicalRecords, setExistingMedicalRecords] = useState<{morning: boolean, evening: boolean}>({morning: false, evening: false})
   const [catMedicationInfo, setCatMedicationInfo] = useState<any>(null)
   const [medicalData, setMedicalData] = useState({
-    description: '',
-    notes: '',
-    volunteer: '',
-    morningDose: false,
-    eveningDose: false
+    medicationName: '',
+    frequency: '',
+    morningDose: '',
+    afternoonDose: '',
+    eveningDose: '',
+    nightDose: '',
+    startDate: '',
+    endDate: '',
+    notes: ''
+
   })
 
   useEffect(() => {
@@ -108,10 +113,14 @@ export default function NewRecordPage() {
         if (medicationResponse.ok) {
           const medicationData = await medicationResponse.json()
           if (medicationData.medications && medicationData.medications.length > 0) {
-            // 獲取最新的用藥記錄
-            const latestMedication = medicationData.medications[0]
-            setCatMedicationInfo(latestMedication)
+            // 設置所有有效的用藥記錄
+            setCatMedicationInfo(medicationData.medications)
+          } else {
+            // 如果沒有用藥記錄，設置為空陣列
+            setCatMedicationInfo([])
           }
+        } else {
+          setCatMedicationInfo([])
         }
       } catch (error) {
         console.error('檢查現有記錄失敗:', error)
@@ -137,8 +146,8 @@ export default function NewRecordPage() {
         return
       }
     } else if (recordType === 'medical') {
-      if (!medicalData.volunteer || (!medicalData.morningDose && !medicalData.eveningDose)) {
-        alert('請填寫餵藥者名稱並選擇至少一個餵藥時間')
+      if (!medicalData.volunteer || !medicalData.timeSlot) {
+        alert('請填寫餵藥者名稱並選擇餵藥時間')
         return
       }
     }
@@ -362,7 +371,7 @@ export default function NewRecordPage() {
                     </Select>
                   </div>
 
-                  {/* 行為 */}
+                   {/* 行為 */}
                   <div className="space-y-2">
                     <Label htmlFor="behavior">行為</Label>
                     <Select onValueChange={(value) => handleHealthDataChange('behavior', value)}>
@@ -392,97 +401,126 @@ export default function NewRecordPage() {
                 </div>
               )}
 
-              {/* 用藥紀錄表單 */}
               {recordType === 'medical' && (
-                <div className="space-y-6">
-                  <h3 className="text-lg font-medium">用藥紀錄</h3>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="volunteer">餵藥者名稱 *</Label>
-                    <Input
-                      id="volunteer"
-                      value={medicalData.volunteer}
-                      onChange={(e) => handleMedicalDataChange('volunteer', e.target.value)}
-                      placeholder="輸入負責餵藥的志工名稱"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>餵藥時間 *</Label>
-                    <div className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="morningDose"
-                          checked={medicalData.morningDose}
-                          onChange={(e) => handleMedicalDataChange('morningDose', e.target.checked)}
-                          className="rounded border-gray-300"
-                          disabled={existingMedicalRecords.morning}
-                        />
-                        <Label htmlFor="morningDose" className={`font-normal ${existingMedicalRecords.morning ? 'text-gray-400' : ''}`}>
-                          早上 {existingMedicalRecords.morning && '(已記錄)'}
-                        </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="eveningDose"
-                          checked={medicalData.eveningDose}
-                          onChange={(e) => handleMedicalDataChange('eveningDose', e.target.checked)}
-                          className="rounded border-gray-300"
-                          disabled={existingMedicalRecords.evening}
-                        />
-                        <Label htmlFor="eveningDose" className={`font-normal ${existingMedicalRecords.evening ? 'text-gray-400' : ''}`}>
-                          晚上 {existingMedicalRecords.evening && '(已記錄)'}
-                        </Label>
-                      </div>
+              <div className="space-y-6">
+                <div className="bg-amber-50 p-4 rounded-lg">
+                  <h4 className="font-medium text-amber-900 mb-2">用藥資訊</h4>
+                  <p className="text-sm text-amber-800 mb-3">
+                    請確實記錄餵藥時間和餵藥者名稱，以便追蹤用藥情況。
+                    每天早上和晚上請確認是否已經餵藥。
+                  </p>
+                  
+                  {/* 顯示貓咪當前的用藥資訊 */}
+                  {catMedicationInfo && catMedicationInfo.length > 0 ? (
+                    <div className="mt-4 space-y-3">
+                      <h5 className="font-medium text-amber-900">當前用藥清單：</h5>
+                      {catMedicationInfo.map((medication: any, index: number) => (
+                        <div key={index} className="bg-white p-3 rounded border border-amber-200">
+                          <div className="flex justify-between items-start mb-2">
+                            <h6 className="font-medium text-gray-900">{medication.medicationName}</h6>
+                            <span className="text-xs text-gray-500">
+                              {new Date(medication.startDate).toLocaleDateString()} - {new Date(medication.endDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                          {medication.dosage && (
+                            <p className="text-sm text-gray-600 mb-1">劑量: {medication.dosage}</p>
+                          )}
+                          <p className="text-sm text-gray-600 mb-2">頻率: {medication.frequency}</p>
+                          <div className="flex gap-2 text-xs">
+                            {medication.morning && <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">早上</span>}
+                            {medication.afternoon && <span className="bg-green-100 text-green-800 px-2 py-1 rounded">下午</span>}
+                            {medication.evening && <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">晚上</span>}
+                            {medication.night && <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">睡前</span>}
+                          </div>
+                          {medication.notes && (
+                            <p className="text-sm text-gray-500 mt-2">備註: {medication.notes}</p>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="description">用藥說明</Label>
-                    <Textarea
-                      id="description"
-                      value={medicalData.description}
-                      onChange={(e) => handleMedicalDataChange('description', e.target.value)}
-                      placeholder="描述用藥原因、注意事項等"
-                      rows={3}
-                    />
-                  </div>
-
-                  {catMedicationInfo && (
-                    <div className="bg-blue-50 p-4 rounded-lg">
-                      <h4 className="font-medium text-blue-900 mb-2">💊 用藥資訊</h4>
-                      <div className="text-sm text-blue-800 space-y-1">
-                        <p><strong>藥物名稱:</strong> {catMedicationInfo.medicationName}</p>
-                        <p><strong>劑量:</strong> {catMedicationInfo.dosage}</p>
-                        {catMedicationInfo.notes && (
-                          <p><strong>備註:</strong> {catMedicationInfo.notes}</p>
-                        )}
-                      </div>
+                  ) : selectedCatId ? (
+                    <div className="mt-4 p-3 bg-gray-100 rounded border">
+                      <p className="text-sm text-gray-600">此貓咪目前沒有進行中的用藥記錄</p>
+                    </div>
+                  ) : (
+                    <div className="mt-4 p-3 bg-gray-100 rounded border">
+                      <p className="text-sm text-gray-600">請先選擇貓咪以查看用藥資訊</p>
                     </div>
                   )}
-                  
-                  <div className="bg-amber-50 p-4 rounded-lg">
-                    <h4 className="font-medium text-amber-900 mb-2">⚠️ 用藥提醒</h4>
-                    <p className="text-sm text-amber-800">
-                      請確實記錄餵藥時間和餵藥者名稱，以便追蹤用藥情況。
-                      每天早上和晚上請確認是否已經餵藥。
-                    </p>
-                  </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="medicalNotes">其他備註</Label>
-                    <Textarea
-                      id="medicalNotes"
-                      value={medicalData.notes}
-                      onChange={(e) => handleMedicalDataChange('notes', e.target.value)}
-                      placeholder="其他需要注意的事項"
-                      rows={3}
-                    />
+                <h3 className="text-lg font-medium">用藥紀錄</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="volunteer">餵藥者名稱 *</Label>
+                  <Input
+                    id="volunteer"
+                    value={medicalData.volunteer}
+                    onChange={(e) => handleMedicalDataChange('volunteer', e.target.value)}
+                    placeholder="輸入負責餵藥的志工名稱"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>餵藥時間 *</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="morningDose"
+                        name="timeSlot"
+                        value="morning"
+                        checked={medicalData.timeSlot === 'morning'}
+                        onChange={(e) => handleMedicalDataChange('timeSlot', e.target.value)}
+                        className="border-gray-300"
+                        disabled={existingMedicalRecords.morning}
+                      />
+                      <Label htmlFor="morningDose" className={`font-normal ${existingMedicalRecords.morning ? 'text-gray-400' : ''}`}>
+                        早上 {existingMedicalRecords.morning && '(已記錄)'}
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="eveningDose"
+                        name="timeSlot"
+                        value="evening"
+                        checked={medicalData.timeSlot === 'evening'}
+                        onChange={(e) => handleMedicalDataChange('timeSlot', e.target.value)}
+                        className="border-gray-300"
+                        disabled={existingMedicalRecords.evening}
+                      />
+                      <Label htmlFor="eveningDose" className={`font-normal ${existingMedicalRecords.evening ? 'text-gray-400' : ''}`}>
+                        晚上 {existingMedicalRecords.evening && '(已記錄)'}
+                      </Label>
+                    </div>
                   </div>
                 </div>
+
+                {/* <div className="space-y-2">
+                  <Label htmlFor="description">用藥說明</Label>
+                  <Textarea
+                    id="description"
+                    value={medicalData.description}
+                    onChange={(e) => handleMedicalDataChange('description', e.target.value)}
+                    placeholder="描述用藥原因、注意事項等"
+                    rows={3}
+                  />
+                </div> */}
+
+                <div className="space-y-2">
+                  <Label htmlFor="medicalNotes">其他備註</Label>
+                  <Textarea
+                    id="medicalNotes"
+                    value={medicalData.notes}
+                    onChange={(e) => handleMedicalDataChange('notes', e.target.value)}
+                    placeholder="其他需要注意的事項"
+                    rows={3}
+                  />
+                </div>
+              </div>
               )}
 
               {/* 按鈕 */}

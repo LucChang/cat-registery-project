@@ -3,8 +3,33 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const catId = searchParams.get('catId');
+    
+    // 如果有catId參數，查詢特定貓咪的用藥資訊
+    if (catId) {
+      const medicationRecords = await prisma.catMedication.findMany({
+        where: {
+          catId: catId,
+          // 只查詢還在有效期內的用藥
+          endDate: {
+            gte: new Date()
+          }
+        },
+        include: {
+          cat: true
+        },
+        orderBy: {
+          createdAt: 'desc'
+        }
+      });
+      
+      return NextResponse.json({ medications: medicationRecords });
+    }
+    
+    // 如果沒有catId參數，返回所有用藥記錄
     const medicationRecords = await prisma.catMedication.findMany({
       include: {
         cat: true

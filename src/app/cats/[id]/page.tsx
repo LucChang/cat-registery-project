@@ -24,16 +24,16 @@ interface Cat {
 export default function CatDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const catId = params.id as string
+  const catId = (params as { id: string }).id
   const [cat, setCat] = useState<Cat | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
   // const 
   useEffect(() => {
     fetchCatDetail()
-  }, [catId, fetchCatDetail])
+  }, [catId])
 
-  const fetchCatDetail = useCallback(async () => {
+  const fetchCatDetail = async () => {
     try {
       const response = await fetch(`/api/cats/${catId}`)
       const data = await response.json()
