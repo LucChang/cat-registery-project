@@ -79,7 +79,7 @@ export default function NewRecordPage() {
     
     getCurrentDate()
   }, [])
-  
+  //nothing
   // 當選擇貓咪或日期改變時，檢查現有記錄
   useEffect(() => {
     const checkExistingRecords = async () => {
