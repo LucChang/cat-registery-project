@@ -19,9 +19,9 @@ export async function GET() {
           },
           take: 1
         },
-        medicalRecords: {
+        medicationRecords: {
           orderBy: {
-            createdAt: 'desc'
+            date: 'desc'
           },
           take: 1
         }

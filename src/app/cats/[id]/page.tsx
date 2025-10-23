@@ -28,10 +28,6 @@ export default function CatDetailPage() {
   const [cat, setCat] = useState<Cat | null>(null)
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(false)
-  // const 
-  useEffect(() => {
-    fetchCatDetail()
-  }, [catId])
 
   const fetchCatDetail = async () => {
     try {
@@ -48,6 +44,10 @@ export default function CatDetailPage() {
       console.error('獲取貓咪資料失敗:', error)
       setLoading(false)
     }
+  }
+
+  useEffect(() => {
+    fetchCatDetail()
   }, [catId])
 
   if (loading) {
@@ -127,7 +127,7 @@ export default function CatDetailPage() {
               <Button>健康記錄</Button>
             </Link>
             <Link href={`/cats/${cat.id}/medical`}>
-              <Button variant="outline">醫療記錄</Button>
+              <Button variant="outline">用藥紀錄</Button>
             </Link>
             <Link href="/cats">
               <Button variant="outline">返回清單</Button>
@@ -245,11 +245,7 @@ export default function CatDetailPage() {
                     新增健康記錄
                   </Button>
                 </Link>
-                <Link href={`/cats/${cat.id}/feeding-medication`}>
-                  <Button variant="outline" className="w-full">
-                    餵藥紀錄
-                  </Button>
-                </Link>
+
                 <Link href={`/cats/${cat.id}/edit`}>
                   <Button variant="outline" className="w-full">
                     編輯資料

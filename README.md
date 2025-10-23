@@ -14,7 +14,7 @@
 
 - **框架**: Next.js 15 (App Router)
 - **語言**: TypeScript
-- **資料庫**: SQLite (Prisma ORM)
+- **資料庫**: mysql (Prisma ORM)
 - **樣式**: Tailwind CSS
 - **部署**: Vercel
 - **CI/CD**: GitHub Actions

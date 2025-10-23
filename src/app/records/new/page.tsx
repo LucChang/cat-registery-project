@@ -35,16 +35,10 @@ export default function NewRecordPage() {
   const [existingMedicalRecords, setExistingMedicalRecords] = useState<{morning: boolean, evening: boolean}>({morning: false, evening: false})
   const [catMedicationInfo, setCatMedicationInfo] = useState<any>(null)
   const [medicalData, setMedicalData] = useState({
-    medicationName: '',
-    frequency: '',
-    morningDose: '',
-    afternoonDose: '',
-    eveningDose: '',
-    nightDose: '',
-    startDate: '',
-    endDate: '',
+    volunteer: '',
+    morningDose: false,
+    eveningDose: false,
     notes: ''
-
   })
 
   useEffect(() => {
@@ -146,8 +140,12 @@ export default function NewRecordPage() {
         return
       }
     } else if (recordType === 'medical') {
-      if (!medicalData.volunteer || !medicalData.timeSlot) {
-        alert('請填寫餵藥者名稱並選擇餵藥時間')
+      if (!medicalData.volunteer) {
+        alert('請填寫餵藥者名稱')
+        return
+      }
+      if (!medicalData.morningDose && !medicalData.eveningDose) {
+        alert('請至少選擇一個餵藥時間')
         return
       }
     }
@@ -192,7 +190,7 @@ export default function NewRecordPage() {
     }))
   }
 
-  const handleMedicalDataChange = (field: string, value: string) => {
+  const handleMedicalDataChange = (field: string, value: string | boolean) => {
     setMedicalData(prev => ({
       ...prev,
       [field]: value
@@ -468,12 +466,10 @@ export default function NewRecordPage() {
                   <div className="flex gap-4">
                     <div className="flex items-center space-x-2">
                       <input
-                        type="radio"
+                        type="checkbox"
                         id="morningDose"
-                        name="timeSlot"
-                        value="morning"
-                        checked={medicalData.timeSlot === 'morning'}
-                        onChange={(e) => handleMedicalDataChange('timeSlot', e.target.value)}
+                        checked={medicalData.morningDose}
+                        onChange={(e) => handleMedicalDataChange('morningDose', e.target.checked)}
                         className="border-gray-300"
                         disabled={existingMedicalRecords.morning}
                       />
@@ -483,12 +479,10 @@ export default function NewRecordPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <input
-                        type="radio"
+                        type="checkbox"
                         id="eveningDose"
-                        name="timeSlot"
-                        value="evening"
-                        checked={medicalData.timeSlot === 'evening'}
-                        onChange={(e) => handleMedicalDataChange('timeSlot', e.target.value)}
+                        checked={medicalData.eveningDose}
+                        onChange={(e) => handleMedicalDataChange('eveningDose', e.target.checked)}
                         className="border-gray-300"
                         disabled={existingMedicalRecords.evening}
                       />
@@ -499,16 +493,7 @@ export default function NewRecordPage() {
                   </div>
                 </div>
 
-                {/* <div className="space-y-2">
-                  <Label htmlFor="description">用藥說明</Label>
-                  <Textarea
-                    id="description"
-                    value={medicalData.description}
-                    onChange={(e) => handleMedicalDataChange('description', e.target.value)}
-                    placeholder="描述用藥原因、注意事項等"
-                    rows={3}
-                  />
-                </div> */}
+
 
                 <div className="space-y-2">
                   <Label htmlFor="medicalNotes">其他備註</Label>

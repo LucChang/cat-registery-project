@@ -8,7 +8,7 @@ on:
 
 env:
   NODE_VERSION: '20'
-  DATABASE_URL: 'file:./dev.db'
+  DATABASE_URL: 'mysql://cat-management:Luc1114popo0825@@lucchang-cloud.myds.me:3306/cat-db'
 
 jobs:
   test:

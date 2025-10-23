@@ -39,7 +39,7 @@ model Cat {
   
   // 健康紀錄
   healthRecords HealthRecord[]
-  medicalRecords MedicalRecord[]
+  medicationRecords MedicationRecord[]
   catMedications CatMedication[]
 }
 
@@ -62,25 +62,6 @@ model HealthRecord {
   cat   Cat    @relation(fields: [catId], references: [id])
 }
 
-model MedicalRecord {
-  id          String   @id @default(cuid())
-  title       String   // 記錄標題
-  date        DateTime // 診療日期
-  veterinarian String  // 獸醫師
-  diagnosis   String   // 診斷結果
-  treatment   String   // 治療方案
-  cost        Float?   // 診療費用
-  medication  String   // 用藥資訊
-  notes       String?
-  createdAt   DateTime @default(now())
-  
-  // 關聯
-  catId String
-  cat   Cat    @relation(fields: [catId], references: [id])
-  
-  // 用藥紀錄
-  medicationRecords MedicationRecord[]
-}
 
 model MedicationRecord {
   id          String   @id @default(cuid())
@@ -90,9 +71,9 @@ model MedicationRecord {
   eveningDose Boolean  @default(false) // 晚上給藥
   notes       String?
   
-  // 關聯到醫療紀錄
-  medicalRecordId String
-  medicalRecord   MedicalRecord @relation(fields: [medicalRecordId], references: [id])
+  // 直接關聯到貓咪
+  catId String
+  cat   Cat    @relation(fields: [catId], references: [id])
 }
 
 model CatMedication {
